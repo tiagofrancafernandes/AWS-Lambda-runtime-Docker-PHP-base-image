@@ -1,0 +1,6 @@
+build-and-push.sh
+*.log
+*.out
+*no*commit*
+*No*Commit*
+*NO*COMMIT*

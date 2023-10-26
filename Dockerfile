@@ -2,6 +2,10 @@ FROM public.ecr.aws/lambda/provided:al2.2023.07.19.03
 # FROM public.ecr.aws/lambda/provided:al2
 # FROM public.ecr.aws/lambda/provided:latest
 
+### Docks AWS Registry e AWS para runtimes personalizados
+# https://docs.aws.amazon.com/pt_br/lambda/latest/dg/images-create.html#runtimes-images-custom
+# https://docs.aws.amazon.com/pt_br/AmazonECS/latest/userguide/create-container-image.html
+
 ARG LAMBDA_HANDLER_FUNCTION='handler.helloWorld'
 ENV LAMBDA_HANDLER_FUNCTION=${LAMBDA_HANDLER_FUNCTION:-handler.helloWorld}
 
@@ -86,6 +90,14 @@ RUN echo ''|pecl install yaml
 RUN echo ''|pecl install uuid
 RUN pecl install xdebug
 RUN pecl install mongodb
+
+## Habilitando a lib do PostgreSQL 14
+RUN amazon-linux-extras enable postgresql14
+RUN yum install -y libpq-devel libpq postgresql
+RUN rpm -qa|grep postgres
+
+# ## Depois de instalado as dependências, remova os arquivos gerados pelo YUM
+# RUN yum clean all
 
 ## WIP - swoole will is not be installed
 # yes|pecl install swoole

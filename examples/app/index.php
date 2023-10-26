@@ -33,5 +33,5 @@ function jsonResponse(array|string $body, int $status = 200, bool $bodyIsJson = 
         'statusCode' => $status,
         'headers' => $headers,
         'body' => $bodyIsJson ? json_decode($body) : $body,
-    ]);
+    ], 64);
 }

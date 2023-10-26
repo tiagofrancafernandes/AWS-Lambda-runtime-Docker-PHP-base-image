@@ -1,0 +1,70 @@
+FROM public.ecr.aws/[USUARIO]/[IMAGEM_AWS]:latest
+## Exemplos:
+# FROM public.ecr.aws/tiago/lambda-laravel-aws-php-base:latest
+# FROM public.ecr.aws/v1x3t5p5/lambda-laravel-aws-php-base:latest
+
+### Docks AWS Registry e AWS para runtimes personalizados
+# https://docs.aws.amazon.com/pt_br/lambda/latest/dg/images-create.html#runtimes-images-custom
+# https://docs.aws.amazon.com/pt_br/AmazonECS/latest/userguide/create-container-image.html
+
+ARG LAMBDA_HANDLER_FUNCTION='handler.helloWorld'
+
+ENV LAMBDA_HANDLER_FUNCTION=${LAMBDA_HANDLER_FUNCTION:-handler.helloWorld}
+
+RUN echo "LAMBDA_HANDLER_FUNCTION: ${LAMBDA_HANDLER_FUNCTION}"
+
+## Instale as dependências necessárias. Segue o exemplo
+RUN yum update -y && \
+    yum install -y php-pdo php-zip bash zsh nano
+
+###### PECL DEPENDENCIES #######
+## Se desejar instalar libs pecl, descomente as linhas abaixo
+# RUN pecl channel-update pecl.php.net
+# RUN pecl update-channels
+
+# RUN yes 'no'|pecl install redis
+# RUN yes|pecl install memcache
+# RUN pecl install xdebug
+# RUN pecl install mongodb
+
+# COPY ./.docker-data/php/custom-options.ini /etc/php.d/20-custom-options.ini
+
+RUN curl 'https://getcomposer.org/download/latest-2.2.x/composer.phar' -o /usr/bin/composer
+RUN chmod +x /usr/bin/composer
+
+## Se desejar atualizar o runtime
+# COPY ./runtime /var/runtime
+
+# RUN chmod +x /var/runtime/bootstrap
+
+## Copie o código da função Lambda para o diretório de trabalho
+COPY . /var/task
+
+RUN composer --working-dir=/var/task/laravel-app install
+
+# RUN amazon-linux-extras enable postgresql10
+RUN amazon-linux-extras enable postgresql14
+RUN yum install -y libpq-devel libpq postgresql
+RUN rpm -qa|grep postgres
+
+# ## Depois de instalado as dependências, remova os arquivos gerados pelo YUM
+# RUN yum clean all
+
+################################################
+### Configurando o handler da função Lambda
+# No docker-compose, essa linha vai em 'command:'
+# Se nada for informado no 'command', usara o valor definido aqui
+#
+# TIP: Pode-se usar a seção do Lambda para informar qual função executar
+# https://[REGION].console.aws.amazon.com/lambda/home?region=[REGION]#/functions/[FUNCTION NAME]?tab=image
+# Ex:
+# https://us-east-1.console.aws.amazon.com/lambda/home?region=us-east-1#/functions/SQSTestePHP8?tab=image
+#
+# Explicando: php-app/lambdaRunnerFile.handler
+# php-app/ -> Pasta onde está o arquivo alvo
+# lambdaRunnerFile -> arquivo alvo 'lambdaRunnerFile.php'
+# handler -> função definida dentro do arquivo alvo
+
+# CMD [ "php-app/lambdaRunnerFile.handler" ]
+CMD [ "handler.helloWorld" ]
+################################################
